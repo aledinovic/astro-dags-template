@@ -12,7 +12,7 @@ import pandas as pd
 from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
 
 # ====== CONFIG ======
-GCP_PROJECT  = "hardy-messenger-229417"      # e.g., "my-gcp-project"
+GCP_PROJECT  = "mba-ciencia-dados-enap"      # e.g., "my-gcp-project"
 BQ_DATASET   = "crypto"                    # e.g., "crypto"
 BQ_TABLE     = "bitcoin_history_hourly"    # e.g., "bitcoin_history_hourly"
 BQ_LOCATION  = "US"                        # dataset location: "US" or "EU"
@@ -104,7 +104,7 @@ def fetch_and_to_gbq():
 @dag(
     default_args=DEFAULT_ARGS,
     schedule="0 0 * * *",  # daily at 00:00 UTC
-    start_date=pendulum.datetime(2025, 9, 17, tz="UTC"),
+    start_date=pendulum.datetime(2025, 1, 1, tz="UTC"),
     catchup=True,
     owner_links={
         "Alex Lopes": "mailto:alexlopespereira@gmail.com",
