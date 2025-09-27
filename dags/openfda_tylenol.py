@@ -36,7 +36,7 @@ DEFAULT_ARGS = {
         "Salva no BigQuery e retorna DataFrame em XCom."
     ),
     start_date=pendulum.datetime(2020, 1, 1, tz="UTC"),
-    schedule="@montlhy",         
+    schedule="@monthly",         
     catchup=True,
     max_active_runs=1,
     default_args=DEFAULT_ARGS,
