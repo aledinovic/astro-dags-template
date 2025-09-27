@@ -31,7 +31,7 @@ DEFAULT_ARGS = {
     dag_id="openfda_tylenol_event_count_manual",
     description="Sob demanda: count=receivedate para acetaminophen no mês informado (conf) ou mês anterior.",
     start_date=pendulum.datetime(2020, 1, 1, tz="UTC"),
-    schedule="@montly",
+    schedule="@monthly",
     catchup=True,
     max_active_runs=1,
     default_args=DEFAULT_ARGS,
