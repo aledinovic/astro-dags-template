@@ -9,6 +9,7 @@ import requests
 import pandas as pd
 from google.cloud import bigquery  # apenas se precisar explicitamente
 # obs: df.to_gbq já usa pandas-gbq que depende de google-cloud-bigquery
+from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
 
 # ====== CONFIG ======
 GCP_PROJECT  = "mba-ciencia-dados-enap"      # e.g., "my-gcp-project"
