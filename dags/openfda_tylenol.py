@@ -12,7 +12,7 @@ from google.cloud import bigquery  # apenas se precisar explicitamente
 
 # ====== CONFIG ======
 GCP_PROJECT  = "mba-ciencia-dados-enap"      # e.g., "my-gcp-project"
-BQ_DATASET   = "crypto"                      # e.g., "crypto"
+BQ_DATASET   = "openfda"                      # e.g., "crypto"
 BQ_TABLE     = "openfda_tylenol"             # tabela destino
 BQ_LOCATION  = "US"                          # dataset location
 GCP_CONN_ID  = "google_cloud_default"        # conexão Airflow -> GCP
@@ -20,6 +20,9 @@ GCP_CONN_ID  = "google_cloud_default"        # conexão Airflow -> GCP
 
 OPENFDA_BASE = "https://api.fda.gov/drug/event.json"
 ACTIVE_PRINCIPLE = "acetaminophen"
+
+bq_hook = BigQueryHook(gcp_conn_id=GCP_CONN_ID, location=BQ_LOCATION)
+credentials = bq_hook.get_credentials()
 
 DEFAULT_ARGS = {
     "owner": "Data Eng",
@@ -77,6 +80,7 @@ def openfda_tylenol_event_count_monthly():
             project_id=GCP_PROJECT,
             if_exists="append",   # acrescenta dados mês a mês
             location=BQ_LOCATION,
+            credentials=credentials,
         )
 
         return df  # também fica disponível em XCom
