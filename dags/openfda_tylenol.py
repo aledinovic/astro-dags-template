@@ -32,7 +32,7 @@ DEFAULT_ARGS = {
     description="Sob demanda: count=receivedate para acetaminophen no mês informado (conf) ou mês anterior.",
     start_date=pendulum.datetime(2020, 1, 1, tz="UTC"),
     schedule="@montly",
-    catchup=False,
+    catchup=True,
     max_active_runs=1,
     default_args=DEFAULT_ARGS,
     tags=["openfda", "manual", "acetaminophen"],
