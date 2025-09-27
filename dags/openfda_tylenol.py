@@ -36,8 +36,8 @@ DEFAULT_ARGS = {
         "Salva no BigQuery e retorna DataFrame em XCom."
     ),
     start_date=pendulum.datetime(2020, 1, 1, tz="UTC"),
-    schedule=True,         
-    catchup="@montlhy",
+    schedule="@montlhy",         
+    catchup=True,
     max_active_runs=1,
     default_args=DEFAULT_ARGS,
     tags=["openfda", "manual", "acetaminophen"],
