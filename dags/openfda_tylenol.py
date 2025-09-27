@@ -6,7 +6,8 @@ import pendulum
 import pandas as pd
 import requests
 
-from airflow.decorators import dag, task, get_current_context
+from airflow.decorators import dag, task
+from airflow.operators.python import get_current_context  # <- import correto
 from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
 
 # ====== CONFIG ======
@@ -27,31 +28,31 @@ DEFAULT_ARGS = {
     "email_on_failure": False,
 }
 
-
 @dag(
     dag_id="openfda_tylenol_event_count_manual",
     description=(
-        "Executa sob demanda: busca contagens diárias (receivedate) para acetaminophen "
+        "Executa sob demanda: contagens diárias (receivedate) para acetaminophen "
         "no mês informado em dag_run.conf (year, month) ou, se ausente, no mês anterior ao gatilho. "
         "Salva no BigQuery e retorna DataFrame em XCom."
     ),
     start_date=pendulum.datetime(2020, 1, 1, tz="UTC"),
-    schedule="@monthly",          # roda apenas quando acionado manualmente
-    catchup=True,
+    schedule=True,         
+    catchup="@montlhy",
     max_active_runs=1,
     default_args=DEFAULT_ARGS,
     tags=["openfda", "manual", "acetaminophen"],
 )
 def openfda_tylenol_event_count_manual():
+
     @task
     def fetch_and_save():
+        # Contexto do run / conf
         ctx = get_current_context()
         dag_run = ctx.get("dag_run")
 
-        # conf passado no Trigger DAG (UI/CLI)
         if dag_run and getattr(dag_run, "conf", None) is not None:
             run_conf = dag_run.conf
-        elif dag_run and getattr(dag_run, "run_conf", None) is not None:  # fallback (alguns ambientes)
+        elif dag_run and getattr(dag_run, "run_conf", None) is not None:  # fallback
             run_conf = dag_run.run_conf
         else:
             run_conf = {}
@@ -61,7 +62,7 @@ def openfda_tylenol_event_count_manual():
         # DataFrame sempre inicializado (evita UnboundLocalError)
         df = pd.DataFrame(columns=["date", "count"])
 
-        # Determina mês alvo: conf.year/conf.month -> senão, mês anterior
+        # Define mês alvo: conf.year/conf.month -> senão, mês anterior
         if "year" in run_conf and "month" in run_conf:
             year = int(run_conf["year"])
             month = int(run_conf["month"])
@@ -74,29 +75,28 @@ def openfda_tylenol_event_count_manual():
         start_str = start.format("YYYYMMDD")
         end_inclusive_str = (end - timedelta(days=1)).format("YYYYMMDD")
 
-        # Monta consulta OpenFDA (apenas acetaminophen; count=receivedate -> retorna 'time')
+        # Consulta OpenFDA (apenas acetaminophen; count=receivedate -> retorna 'time')
         params = {
-            "search": f'patient.drug.medicinalproduct:"{ACTIVE_PRINCIPLE}" AND receivedate:[{start_str} TO {end_inclusive_str}]',
+            "search": f'patient.drug.medicinalproduct:"{ACTIVE_PRINCIPLE}" '
+                      f'AND receivedate:[{start_str} TO {end_inclusive_str}]',
             "count": "receivedate",
         }
 
         try:
             resp = requests.get(OPENFDA_BASE, params=params, timeout=30)
-            # (Opcional para depuração) veja a URL final resolvida pelo requests:
-            print(f"[OpenFDA] URL: {resp.url}")
+            print(f"[OpenFDA] URL: {resp.url}")  # útil para depuração
             if resp.status_code == 404:
                 results = []
             else:
                 resp.raise_for_status()
-                payload = resp.json() or {}
-                results = payload.get("results", []) or []
+                results = (resp.json() or {}).get("results", []) or []
         except Exception as e:
             print(f"[OpenFDA] Falha na requisição/parse: {e}")
             return df  # vazio
 
         if results:
             raw = pd.DataFrame(results)
-            # Para count=receivedate, esperamos colunas 'time' e 'count'
+            # Para count=receivedate esperamos 'time' e 'count'
             if {"time", "count"}.issubset(raw.columns):
                 df = (
                     raw[["time", "count"]]
@@ -126,6 +126,4 @@ def openfda_tylenol_event_count_manual():
 
     fetch_and_save()
 
-
 dag = openfda_tylenol_event_count_manual()
-
