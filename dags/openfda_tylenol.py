@@ -68,9 +68,19 @@ def openfda_tylenol_event_count_monthly():
             results = resp.json().get("results", [])
 
         if results:
-            df = pd.DataFrame(results).rename(columns={"term": "date"})
-            df = df[["date", "count"]].copy()
-            df = df.sort_values("date").reset_index(drop=True)
+            df = pd.DataFrame(results)
+            # Para "count=receivedate", a API usa "time";
+            # em outros counts, pode usar "term". Tratamos ambos.
+        if "time" in df.columns:
+            df.rename(columns={"time": "date"}, inplace=True)
+        elif "term" in df.columns:
+            df.rename(columns={"term": "date"}, inplace=True)
+
+        # garante as colunas mínimas
+        if "count" not in df.columns:
+            df["count"] = pd.NA
+
+            df = df[["date", "count"]].sort_values("date").reset_index(drop=True)
         else:
             df = pd.DataFrame(columns=["date", "count"])
 
